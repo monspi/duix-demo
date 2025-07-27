@@ -7,7 +7,7 @@ let appConfig = null;
 // 加载前端配置文件
 async function loadConfig() {
   try {
-    const response = await fetch('/config.json');
+    const response = await fetch('/frontend.config.json');
     appConfig = await response.json();
     console.log('前端配置加载成功:', appConfig);
     return appConfig;
@@ -347,27 +347,14 @@ function initBackgroundStream() {
   // 获取直播流地址，优先使用配置的defaultStreamUrl
   let streamUrl = streamConfig.defaultStreamUrl;
   
-  // 如果defaultStreamUrl为空，检查是否使用fallback
+  // 如果defaultStreamUrl为空，则不加载视频
   if (!streamUrl || streamUrl.trim() === '') {
     console.log('默认直播流地址为空，不加载背景视频');
     video.style.display = 'none';
     return;
   }
-  
-  // 如果streamUrl仍为空，使用fallback（如果配置允许）
-  if (!streamUrl && streamConfig.fallbackStreamUrl) {
-    streamUrl = streamConfig.fallbackStreamUrl;
-    console.log('使用备用直播流地址:', streamUrl);
-  }
-  
-  if (!streamUrl) {
-    console.log('没有可用的直播流地址');
-    video.style.display = 'none';
-    return;
-  }
-  
+
   console.log('正在加载直播流:', streamUrl);
-  
   // 检查是否启用HLS
   if (!streamConfig.enableHLS) {
     console.log('HLS功能已禁用');

@@ -1,0 +1,17 @@
+{
+  "backend": {
+    "baseUrl": "http://localhost:3000",
+    "httpsUrl": "https://localhost:3443"
+  },
+  "livestream": {
+    "defaultStreamUrl": "",
+    "fallbackStreamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "autoPlay": true,
+    "enableHLS": true
+  },
+  "ui": {
+    "hideLoadingAfterInit": true,
+    "chatPosition": "top-right",
+    "autoInit": true
+  }
+}
