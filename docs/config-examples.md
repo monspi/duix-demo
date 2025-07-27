@@ -9,9 +9,9 @@
   },
   "livestream": {
     "defaultStreamUrl": "",
-    "fallbackStreamUrl": "",
     "autoPlay": false,
-    "enableHLS": false
+    "enableHLS": false,
+    "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
     "hideLoadingAfterInit": true,
@@ -30,9 +30,9 @@
   },
   "livestream": {
     "defaultStreamUrl": "https://your-cdn.com/live/stream.m3u8",
-    "fallbackStreamUrl": "https://backup-cdn.com/live/stream.m3u8",
     "autoPlay": true,
-    "enableHLS": true
+    "enableHLS": true,
+    "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
     "hideLoadingAfterInit": true,
@@ -51,9 +51,9 @@
   },
   "livestream": {
     "defaultStreamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-    "fallbackStreamUrl": "",
     "autoPlay": true,
-    "enableHLS": true
+    "enableHLS": true,
+    "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
     "hideLoadingAfterInit": false,
@@ -77,13 +77,8 @@
 
 ### livestream.defaultStreamUrl
 - 主要的m3u8直播流地址
-- **重要**: 设置为空字符串 `""` 时，不会加载任何背景视频
+- **重要**: 设置为空字符串 `""` 时，会直接加载背景图片
 - 支持HTTPS和HTTP协议
-
-### livestream.fallbackStreamUrl
-- 备用直播流地址
-- 当主要流地址失效时使用
-- 可以设置为空以禁用备用流
 
 ### livestream.autoPlay
 - 是否自动播放背景视频
@@ -94,6 +89,12 @@
 - 是否启用HLS直播流支持
 - `true`: 启用HLS.js库支持
 - `false`: 禁用HLS功能
+
+### livestream.fallbackBackgroundImage
+- 当视频流加载失败时显示的背景图片
+- 支持相对路径（如：`"/bg.png"`）和绝对URL
+- 图片会以cover模式填充整个背景
+- 如果不设置或设置为空，则不显示背景图片
 
 ### ui.hideLoadingAfterInit
 - 数字人初始化成功后是否隐藏加载提示

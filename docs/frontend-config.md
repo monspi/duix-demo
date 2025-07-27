@@ -10,10 +10,10 @@
 - 语音对话功能
 - 可配置的后端地址和直播流地址
 
-## 前端配置文件
+### 前端配置文件
 
 ### 配置文件位置
-前端配置文件位于项目根目录：`config.json`
+前端配置文件位于项目根目录：`frontend.config.json`
 
 ### 配置文件结构
 ```json
@@ -24,9 +24,9 @@
   },
   "livestream": {
     "defaultStreamUrl": "",
-    "fallbackStreamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
     "autoPlay": true,
-    "enableHLS": true
+    "enableHLS": true,
+    "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
     "hideLoadingAfterInit": true,
@@ -43,10 +43,10 @@
 - `httpsUrl`: 后端HTTPS服务器地址（用于需要HTTPS的功能）
 
 #### livestream 直播流配置
-- `defaultStreamUrl`: 主要的m3u8直播流地址（**为空时不加载背景视频**）
-- `fallbackStreamUrl`: 备用直播流地址（当defaultStreamUrl失效时使用）
+- `defaultStreamUrl`: 主要的m3u8直播流地址（**为空时直接加载背景图片**）
 - `autoPlay`: 是否自动播放背景视频
 - `enableHLS`: 是否启用HLS直播流支持
+- `fallbackBackgroundImage`: 视频流加载失败时的备用背景图片
 
 #### ui 界面配置
 - `hideLoadingAfterInit`: 数字人初始化成功后是否隐藏加载提示
@@ -56,7 +56,7 @@
 ## 配置您的直播流
 
 ### 1. 修改直播流地址
-在 `config.json` 文件中修改 `livestream.defaultStreamUrl`：
+在 `frontend.config.json` 文件中修改 `livestream.defaultStreamUrl`：
 
 ```json
 {
@@ -77,7 +77,19 @@
 }
 ```
 
-### 3. 修改后端地址
+### 3. 设置备用背景图片
+当视频流无法加载时，自动显示背景图片：
+
+```json
+{
+  "livestream": {
+    "defaultStreamUrl": "",
+    "fallbackBackgroundImage": "/bg.png"
+  }
+}
+```
+
+### 4. 修改后端地址
 如果后端服务运行在不同的地址，修改 `backend.baseUrl`：
 
 ```json

@@ -21,9 +21,9 @@ async function loadConfig() {
       },
       livestream: {
         defaultStreamUrl: "",
-        fallbackStreamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         autoPlay: true,
-        enableHLS: true
+        enableHLS: true,
+        fallbackBackgroundImage: "/bg.png"
       },
       ui: {
         hideLoadingAfterInit: true,
@@ -344,23 +344,30 @@ function initBackgroundStream() {
   const video = document.querySelector('#background-stream');
   const streamConfig = appConfig.livestream;
   
-  // 获取直播流地址，优先使用配置的defaultStreamUrl
+  // 获取直播流地址
   let streamUrl = streamConfig.defaultStreamUrl;
   
-  // 如果defaultStreamUrl为空，则不加载视频
+  // 如果defaultStreamUrl为空，直接加载背景图片
   if (!streamUrl || streamUrl.trim() === '') {
-    console.log('默认直播流地址为空，不加载背景视频');
-    video.style.display = 'none';
+    console.log('直播流地址为空，加载背景图片');
+    loadFallbackBackground();
     return;
   }
 
   console.log('正在加载直播流:', streamUrl);
+  
   // 检查是否启用HLS
   if (!streamConfig.enableHLS) {
-    console.log('HLS功能已禁用');
-    video.style.display = 'none';
+    console.log('HLS功能已禁用，加载背景图片');
+    loadFallbackBackground();
     return;
   }
+  
+  // 为视频添加错误监听器
+  video.addEventListener('error', () => {
+    console.log('视频加载失败，切换到背景图片');
+    loadFallbackBackground();
+  });
   
   // 检查是否支持 HLS
   if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -369,6 +376,7 @@ function initBackgroundStream() {
     if (streamConfig.autoPlay) {
       video.play().catch(e => {
         console.log('视频自动播放被阻止:', e);
+        loadFallbackBackground();
       });
     }
   } else if (window.Hls && window.Hls.isSupported()) {
@@ -380,18 +388,53 @@ function initBackgroundStream() {
       if (streamConfig.autoPlay) {
         video.play().catch(e => {
           console.log('视频自动播放被阻止:', e);
+          loadFallbackBackground();
         });
       }
     });
     hls.on(window.Hls.Events.ERROR, (event, data) => {
       console.log('HLS 错误:', data);
-      // 如果加载失败，隐藏视频
-      video.style.display = 'none';
+      loadFallbackBackground();
     });
   } else {
-    console.error('浏览器不支持 HLS 播放');
-    video.style.display = 'none';
+    console.error('浏览器不支持 HLS 播放，加载背景图片');
+    loadFallbackBackground();
   }
+}
+
+// 加载备用背景图片
+function loadFallbackBackground() {
+  if (!appConfig || !appConfig.livestream.fallbackBackgroundImage) {
+    console.log('没有配置备用背景图片');
+    const video = document.querySelector('#background-stream');
+    video.style.display = 'none';
+    return;
+  }
+  
+  const video = document.querySelector('#background-stream');
+  const backgroundImage = appConfig.livestream.fallbackBackgroundImage;
+  
+  console.log('加载备用背景图片:', backgroundImage);
+  
+  // 隐藏视频元素
+  video.style.display = 'none';
+  
+  // 设置容器背景图片
+  const container = document.querySelector('.app-container');
+  container.style.backgroundImage = `url('${backgroundImage}')`;
+  container.style.backgroundSize = 'cover';
+  container.style.backgroundPosition = 'center';
+  container.style.backgroundRepeat = 'no-repeat';
+  
+  // 为了确保图片加载，我们可以预加载它
+  const img = new Image();
+  img.onload = () => {
+    console.log('背景图片加载成功');
+  };
+  img.onerror = () => {
+    console.error('背景图片加载失败:', backgroundImage);
+  };
+  img.src = backgroundImage;
 }
 
 // 绑定事件

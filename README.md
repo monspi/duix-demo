@@ -9,6 +9,15 @@
 - **后端**：Node.js Express 服务器
 - **核心功能**：集成 duix-guiji-light 包进行演示
 
+### ✨ 主要特性
+- 🎭 数字人全屏显示
+- 🎬 支持 m3u8 直播流背景
+- 🖼️ 智能背景图片备用机制  
+- 🗣️ 实时语音识别和对话
+- 🎨 绿幕背景自动去除
+- ⚙️ 灵活的前后端配置
+- 📱 响应式界面设计
+
 ## 快速开始
 
 ### 前提条件
@@ -16,17 +25,39 @@
 - npm 或 yarn
 - Duix 账号和应用凭证（appId, appKey）
 
-### 配置 Duix 凭证
-1. 复制配置模板
+## 快速开始
+
+### 前提条件
+- Node.js 16.x 或更高版本
+- npm 或 yarn
+- Duix 账号和应用凭证（appId, appKey）
+
+### 1. 配置后端服务
+1. 复制后端配置模板
    ```bash
    copy server\config\config.example.json server\config\config.json
    ```
 2. 编辑 `server\config\config.json` 文件
 3. 将 `your_app_id_here` 替换为你的 Duix AppId
 4. 将 `your_app_key_here` 替换为你的 Duix AppKey
-5. 详细配置说明请参考 [CONFIG.md](./CONFIG.md)
 
-⚠️ **安全提醒**: 配置文件现在位于 `server/config/` 目录下，前端无法访问
+### 2. 配置前端应用
+1. 复制前端配置模板
+   ```bash
+   copy frontend.config.example.json frontend.config.json
+   ```
+2. 根据需要编辑 `frontend.config.json` 文件：
+   - 修改后端地址（如果后端不在默认端口）
+   - 配置直播流地址（可选）
+   - 设置背景图片路径
+
+### 3. 配置说明
+- **后端配置**: 详见 [后端配置文档](./docs/backend-config.md)
+- **前端配置**: 详见 [前端配置文档](./docs/frontend-config.md)
+
+⚠️ **安全提醒**: 
+- 后端配置文件位于 `server/config/` 目录下，前端无法访问
+- 前端配置文件已加入 `.gitignore`，不会提交到版本控制
 
 ### 安装依赖
 ```bash
@@ -59,91 +90,6 @@ npm run server
 npm run build
 ```
 
-## 项目结构
-
-```
-duix-demo/
-├── public/                 # 前端公共资源目录
-│   └── vite.svg           # 图标文件
-├── index.html             # 主 HTML 文件
-├── main.js                # 前端主入口
-├── style.css              # 样式文件
-├── vite.config.js         # Vite 配置（包含安全限制）⭐
-├── CONFIG.md              # 配置说明文档
-├── .gitignore             # Git 忽略文件 ⭐
-├── server/                # 后端目录（前端无法访问）🔒
-│   ├── app.js             # 后端服务器
-│   └── config/            # 配置文件目录（高安全性）🔒
-│       ├── config.example.json # 配置模板
-│       └── config.json    # 实际配置（不提交到Git）⚠️
-├── package.json           # 项目配置
-└── README.md             # 项目说明
-```
-
-## API 接口
-
-### 测试接口
-- `GET /api/test` - 测试后端服务状态
-- `GET /api/duix/config` - 获取 Duix 配置
-- `POST /api/duix/action` - 执行 Duix 动作
-
-## 功能特性
-
-- ✅ 现代 ES6+ JavaScript
-- ✅ Vite 快速开发体验
-- ✅ Express.js 后端 API
-- ✅ CORS 跨域支持
-- ✅ **Duix Guiji Light 完整集成**
-  - 语音识别 (ASR)
-  - 智能对话会话
-  - 事件监听机制
-  - 动态签名获取
-- ✅ 开发/生产环境配置
-- ✅ **安全配置管理**
-  - 配置文件位于 `server/config/` 目录，前端无法访问 🔒
-  - Vite 配置严格限制文件访问 🔒
-  - Git 忽略敏感文件
-  - 配置文件模板机制
-  - API 接口安全过滤
-
-## Duix 使用说明
-
-### 主要功能
-1. **初始化 Duix** - 从后端获取配置和签名
-2. **开始会话** - 启动语音识别和智能对话
-3. **停止会话** - 结束当前对话会话
-4. **实时状态** - 显示当前操作状态
-
-### API 接口
-- `GET /api/duix/config` - 获取非敏感的 Duix 配置信息 🔒
-- `POST /api/duix/sign` - 获取 JWT 访问签名（官方标准）🔒
-- `POST /api/duix/verify-token` - 验证 JWT Token 有效性 🔒
-- `GET /api/config/status` - 检查配置状态（无敏感信息） 🔒
-- `GET /api/test` - 测试后端服务状态
-- `POST /api/duix/action` - 执行 Duix 动作
-
-🔒 = 不暴露敏感配置信息
-
-### 事件监听
-- `initialSuccess` - 初始化成功
-- `sessionStart` - 会话开始
-- `sessionEnd` - 会话结束
-- `asrResult` - 语音识别结果
-- `error` - 错误处理
-
-### JWT Token 管理
-- 使用官方标准的 JWT (JSON Web Token) 签名机制
-- 默认有效期 30 分钟（1800 秒）
-- 支持 Token 验证和过期检测
-- 符合 Duix 官方 API 规范
-
-## 开发说明
-
-1. 前端使用 Vite 作为构建工具，支持热重载
-2. 后端提供 RESTful API 接口
-3. 项目使用 ES modules (type: "module")
-4. 支持并发开发模式
-
 ## 故障排除
 
 如果遇到问题：
@@ -151,6 +97,14 @@ duix-demo/
 2. 删除 `node_modules` 并重新 `npm install`
 3. 检查端口 3000 和 5173 是否被占用
 4. 查看控制台错误信息
+
+## 📚 文档
+
+- [快速开始指南](./docs/quick-start.md) - 简化的配置方案和使用指南
+- [前端配置文档](./docs/frontend-config.md) - 数字人直播间前端配置说明
+- [后端配置文档](./docs/backend-config.md) - Duix 后端服务配置说明
+- [配置示例](./docs/config-examples.md) - 各种场景的配置示例
+- [背景图片功能](./docs/background-fallback.md) - 背景图片备用功能说明
 
 ## 贡献
 
