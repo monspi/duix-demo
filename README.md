@@ -25,13 +25,6 @@
 - npm 或 yarn
 - Duix 账号和应用凭证（appId, appKey）
 
-## 快速开始
-
-### 前提条件
-- Node.js 16.x 或更高版本
-- npm 或 yarn
-- Duix 账号和应用凭证（appId, appKey）
-
 ### 1. 配置后端服务
 1. 复制后端配置模板
    ```bash
@@ -106,6 +99,3 @@ npm run build
 - [配置示例](./docs/config-examples.md) - 各种场景的配置示例
 - [背景图片功能](./docs/background-fallback.md) - 背景图片备用功能说明
 
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
