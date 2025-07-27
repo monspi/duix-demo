@@ -1,6 +1,40 @@
 import './style.css'
 import DUIX from 'duix-guiji-light'
 
+// 全局配置变量
+let appConfig = null;
+
+// 加载前端配置文件
+async function loadConfig() {
+  try {
+    const response = await fetch('/config.json');
+    appConfig = await response.json();
+    console.log('前端配置加载成功:', appConfig);
+    return appConfig;
+  } catch (error) {
+    console.error('加载前端配置失败:', error);
+    // 使用默认配置
+    appConfig = {
+      backend: {
+        baseUrl: "http://localhost:3000",
+        httpsUrl: "https://localhost:3443"
+      },
+      livestream: {
+        defaultStreamUrl: "",
+        fallbackStreamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+        autoPlay: true,
+        enableHLS: true
+      },
+      ui: {
+        hideLoadingAfterInit: true,
+        chatPosition: "top-right",
+        autoInit: true
+      }
+    };
+    return appConfig;
+  }
+}
+
 // 初始化应用
 document.querySelector('#app').innerHTML = `
   <div class="app-container">
@@ -41,6 +75,15 @@ let chromaKeyRemover = null;
 
 function updateStatus(status) {
   document.querySelector('#status').textContent = status;
+}
+
+// 隐藏数字人加载提示
+function hideLoadingMessage() {
+  const loadingElement = document.querySelector('#duix-container p');
+  if (loadingElement && appConfig?.ui?.hideLoadingAfterInit) {
+    loadingElement.style.display = 'none';
+    console.log('数字人加载提示已隐藏');
+  }
 }
 
 // 初始化绿幕去除功能
@@ -95,8 +138,16 @@ async function initDuix() {
   try {
     updateStatus('开始初始化...');
     
+    if (!appConfig) {
+      throw new Error('前端配置未加载');
+    }
+    
+    // 使用配置文件中的后端地址
+    const backendUrl = appConfig.backend.baseUrl;
+    console.log('使用后端地址:', backendUrl);
+    
     // 从后端获取配置
-    const configResponse = await fetch('http://localhost:3000/api/duix/config');
+    const configResponse = await fetch(`${backendUrl}/api/duix/config`);
     const configData = await configResponse.json();
     
     // 检查配置是否有效
@@ -109,7 +160,7 @@ async function initDuix() {
     }
     
     // 获取签名（使用优化的时间戳和有效期）
-    const signResponse = await fetch('http://localhost:3000/api/duix/sign', {
+    const signResponse = await fetch(`${backendUrl}/api/duix/sign`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -158,6 +209,9 @@ async function initDuix() {
           console.log('数字人已显示');
           updateStatus('数字人已就绪');
           document.querySelector('#start-btn').disabled = false;
+          
+          // 隐藏数字人加载提示
+          hideLoadingMessage();
         });
 
         duixInstance.on('bye', () => {
@@ -282,36 +336,73 @@ async function initDuix() {
 
 // 初始化 HLS 直播流
 function initBackgroundStream() {
+  if (!appConfig) {
+    console.error('配置文件未加载，无法初始化直播流');
+    return;
+  }
+
   const video = document.querySelector('#background-stream');
+  const streamConfig = appConfig.livestream;
   
-  // 默认的测试直播流（您可以替换为实际的 m3u8 地址）
-  const defaultStreamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'; // 测试流
+  // 获取直播流地址，优先使用配置的defaultStreamUrl
+  let streamUrl = streamConfig.defaultStreamUrl;
+  
+  // 如果defaultStreamUrl为空，检查是否使用fallback
+  if (!streamUrl || streamUrl.trim() === '') {
+    console.log('默认直播流地址为空，不加载背景视频');
+    video.style.display = 'none';
+    return;
+  }
+  
+  // 如果streamUrl仍为空，使用fallback（如果配置允许）
+  if (!streamUrl && streamConfig.fallbackStreamUrl) {
+    streamUrl = streamConfig.fallbackStreamUrl;
+    console.log('使用备用直播流地址:', streamUrl);
+  }
+  
+  if (!streamUrl) {
+    console.log('没有可用的直播流地址');
+    video.style.display = 'none';
+    return;
+  }
+  
+  console.log('正在加载直播流:', streamUrl);
+  
+  // 检查是否启用HLS
+  if (!streamConfig.enableHLS) {
+    console.log('HLS功能已禁用');
+    video.style.display = 'none';
+    return;
+  }
   
   // 检查是否支持 HLS
   if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = defaultStreamUrl;
+    video.src = streamUrl;
     video.load();
-    video.play().catch(e => {
-      console.log('视频自动播放被阻止:', e);
-    });
-  } else if (window.Hls && window.Hls.isSupported()) {
-    // 使用 hls.js 库处理 HLS 流
-    const hls = new window.Hls();
-    hls.loadSource(defaultStreamUrl);
-    hls.attachMedia(video);
-    hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+    if (streamConfig.autoPlay) {
       video.play().catch(e => {
         console.log('视频自动播放被阻止:', e);
       });
+    }
+  } else if (window.Hls && window.Hls.isSupported()) {
+    // 使用 hls.js 库处理 HLS 流
+    const hls = new window.Hls();
+    hls.loadSource(streamUrl);
+    hls.attachMedia(video);
+    hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+      if (streamConfig.autoPlay) {
+        video.play().catch(e => {
+          console.log('视频自动播放被阻止:', e);
+        });
+      }
     });
     hls.on(window.Hls.Events.ERROR, (event, data) => {
       console.log('HLS 错误:', data);
-      // 如果加载失败，显示默认背景
+      // 如果加载失败，隐藏视频
       video.style.display = 'none';
     });
   } else {
     console.error('浏览器不支持 HLS 播放');
-    // 如果不支持 HLS，隐藏视频元素
     video.style.display = 'none';
   }
 }
@@ -367,12 +458,28 @@ document.querySelector('#stop-btn').addEventListener('click', async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('应用已加载，开始自动初始化');
   
-  // 初始化背景直播流
-  initBackgroundStream();
-  
-  // 初始化绿幕去除功能
-  initChromaKey();
-  
-  // 自动初始化 Duix
-  await initDuix();
+  try {
+    // 首先加载前端配置文件
+    await loadConfig();
+    
+    // 检查是否启用自动初始化
+    if (!appConfig.ui.autoInit) {
+      console.log('自动初始化已禁用');
+      updateStatus('等待手动初始化');
+      return;
+    }
+    
+    // 初始化背景直播流
+    initBackgroundStream();
+    
+    // 初始化绿幕去除功能
+    initChromaKey();
+    
+    // 自动初始化 Duix
+    await initDuix();
+    
+  } catch (error) {
+    console.error('应用初始化失败:', error);
+    updateStatus('初始化失败');
+  }
 });

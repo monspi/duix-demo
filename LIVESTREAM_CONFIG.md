@@ -8,20 +8,84 @@
 - 右上角透明对话框
 - 自动初始化
 - 语音对话功能
+- 可配置的后端地址和直播流地址
+
+## 前端配置文件
+
+### 配置文件位置
+前端配置文件位于项目根目录：`config.json`
+
+### 配置文件结构
+```json
+{
+  "backend": {
+    "baseUrl": "http://localhost:3000",
+    "httpsUrl": "https://localhost:3443"
+  },
+  "livestream": {
+    "defaultStreamUrl": "",
+    "fallbackStreamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "autoPlay": true,
+    "enableHLS": true
+  },
+  "ui": {
+    "hideLoadingAfterInit": true,
+    "chatPosition": "top-right",
+    "autoInit": true
+  }
+}
+```
+
+### 配置项说明
+
+#### backend 后端配置
+- `baseUrl`: 后端API服务器地址
+- `httpsUrl`: 后端HTTPS服务器地址（用于需要HTTPS的功能）
+
+#### livestream 直播流配置
+- `defaultStreamUrl`: 主要的m3u8直播流地址（**为空时不加载背景视频**）
+- `fallbackStreamUrl`: 备用直播流地址（当defaultStreamUrl失效时使用）
+- `autoPlay`: 是否自动播放背景视频
+- `enableHLS`: 是否启用HLS直播流支持
+
+#### ui 界面配置
+- `hideLoadingAfterInit`: 数字人初始化成功后是否隐藏加载提示
+- `chatPosition`: 对话框位置（目前支持 "top-right"）
+- `autoInit`: 页面加载时是否自动初始化数字人
 
 ## 配置您的直播流
 
 ### 1. 修改直播流地址
-在 `main.js` 文件中找到 `initBackgroundStream()` 函数，修改以下代码：
+在 `config.json` 文件中修改 `livestream.defaultStreamUrl`：
 
-```javascript
-// 默认的测试直播流（您可以替换为实际的 m3u8 地址）
-const defaultStreamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'; // 测试流
+```json
+{
+  "livestream": {
+    "defaultStreamUrl": "https://your-domain.com/live/stream.m3u8"
+  }
+}
 ```
 
-将 `defaultStreamUrl` 替换为您的实际 m3u8 直播流地址，例如：
-```javascript
-const defaultStreamUrl = 'https://your-domain.com/live/stream.m3u8';
+### 2. 禁用背景视频
+如果不需要背景视频，将 `defaultStreamUrl` 设置为空字符串：
+
+```json
+{
+  "livestream": {
+    "defaultStreamUrl": ""
+  }
+}
+```
+
+### 3. 修改后端地址
+如果后端服务运行在不同的地址，修改 `backend.baseUrl`：
+
+```json
+{
+  "backend": {
+    "baseUrl": "http://your-server:3000"
+  }
+}
 ```
 
 ### 2. 支持的直播流格式
