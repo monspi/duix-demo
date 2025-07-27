@@ -4,29 +4,31 @@ import DUIX from 'duix-guiji-light'
 // 初始化应用
 document.querySelector('#app').innerHTML = `
   <div class="app-container">
-    <div class="left-panel">
-      <div id="duix-container" class="remote-container">
-        <p>准备就绪，点击开始演示...</p>
-      </div>
+    <!-- 背景直播流 -->
+    <video id="background-stream" class="background-video" autoplay muted loop>
+      <source src="" type="application/x-mpegURL">
+      您的浏览器不支持视频播放
+    </video>
+    
+    <!-- 数字人全屏容器 -->
+    <div id="duix-container" class="duix-fullscreen">
+      <p>正在初始化数字人...</p>
     </div>
-    <div class="right-panel">
-      <div class="chat-header">
-        <h2>🤖 Duix 智能对话</h2>
-        <div id="status" class="status-bar">状态: 未初始化</div>
-      </div>
-      <div class="chat-area">
-        <div id="chat-output" class="chat-output">
-          <div class="welcome-message">
-            欢迎使用 Duix 智能对话系统！<br>
-            请先初始化数字人，然后开始对话。
-          </div>
+    
+    <!-- 绿幕去除canvas (隐藏，用于处理) -->
+    <canvas id="chroma-canvas" style="display: none;"></canvas>
+    
+    <!-- 右上角透明对话框 -->
+    <div class="chat-overlay">
+      <div class="chat-content">
+        <div id="status" class="status-display">正在初始化...</div>
+        <div id="chat-output" class="chat-messages">
+          <div class="system-message">系统已就绪</div>
         </div>
-      </div>
-      <div class="control-panel">
-        <button id="init-btn" type="button">初始化 Duix</button>
-        <button id="start-btn" type="button" disabled>开始会话</button>
-        <button id="stop-btn" type="button" disabled>停止会话</button>
-        <button id="retry-btn" type="button" style="display: none;">重试初始化</button>
+        <div class="control-buttons">
+          <button id="start-btn" type="button" disabled>开始对话</button>
+          <button id="stop-btn" type="button" disabled>结束对话</button>
+        </div>
       </div>
     </div>
   </div>
@@ -35,9 +37,58 @@ document.querySelector('#app').innerHTML = `
 // 初始化 duix-guiji-light
 let duixInstance = null;
 let currentToken = null;
+let chromaKeyRemover = null;
 
 function updateStatus(status) {
   document.querySelector('#status').textContent = status;
+}
+
+// 初始化绿幕去除功能
+function initChromaKey() {
+  // 等待数字人容器中的视频或canvas元素出现
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.tagName === 'VIDEO' || node.tagName === 'CANVAS') {
+          console.log('检测到数字人视频元素，启用绿幕去除');
+          
+          // 如果是视频元素，设置绿幕去除
+          if (node.tagName === 'VIDEO') {
+            const canvas = document.querySelector('#chroma-canvas');
+            chromaKeyRemover = new window.ChromaKeyRemover(node, canvas);
+            
+            // 配置绿幕参数
+            chromaKeyRemover.setChromaKey({
+              r: 0,
+              g: 255, 
+              b: 0,
+              threshold: 120, // 增加容差以更好地去除绿色
+              smoothing: 0.2
+            });
+            
+            // 开始绿幕去除处理
+            chromaKeyRemover.start();
+            
+            // 将原视频隐藏，显示处理后的canvas
+            node.style.display = 'none';
+            canvas.style.display = 'block';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.objectFit = 'cover';
+            
+            // 将canvas移动到数字人容器中
+            document.querySelector('#duix-container').appendChild(canvas);
+          }
+        }
+      });
+    });
+  });
+  
+  // 观察数字人容器的变化
+  observer.observe(document.querySelector('#duix-container'), {
+    childList: true,
+    subtree: true
+  });
 }
 
 async function initDuix() {
@@ -105,7 +156,8 @@ async function initDuix() {
         // 绑定其他事件监听器
         duixInstance.on('show', () => {
           console.log('数字人已显示');
-          updateStatus('数字人已显示，可以开始会话');
+          updateStatus('数字人已就绪');
+          document.querySelector('#start-btn').disabled = false;
         });
 
         duixInstance.on('bye', () => {
@@ -118,9 +170,7 @@ async function initDuix() {
           const chatOutput = document.querySelector('#chat-output');
           const endDiv = document.createElement('div');
           endDiv.className = 'chat-message system-message';
-          endDiv.innerHTML = `
-            <div class="message-content">📞 会话已结束</div>
-          `;
+          endDiv.innerHTML = `📞 会话已结束`;
           chatOutput.appendChild(endDiv);
           chatOutput.scrollTop = chatOutput.scrollHeight;
         });
@@ -133,42 +183,36 @@ async function initDuix() {
           const chatOutput = document.querySelector('#chat-output');
           const userDiv = document.createElement('div');
           userDiv.className = 'chat-message user-message';
-          userDiv.innerHTML = `
-            <div class="message-label">👤 您说:</div>
-            <div class="message-content">${content}</div>
-          `;
+          userDiv.innerHTML = `👤 ${content}`;
           chatOutput.appendChild(userDiv);
           chatOutput.scrollTop = chatOutput.scrollHeight;
         });
 
         duixInstance.on('asrStart', () => {
           console.log('开始语音识别');
-          updateStatus('🎤 正在听取语音...');
+          updateStatus('🎤 听取中...');
         });
 
         duixInstance.on('asrStop', () => {
           console.log('语音识别结束');
-          updateStatus('等待语音输入...');
+          updateStatus('等待输入...');
         });
 
         duixInstance.on('speakStart', (data) => {
           console.log('数字人开始说话:', data);
-          updateStatus('数字人正在说话...');
+          updateStatus('🤖 回复中...');
         });
 
         duixInstance.on('speakEnd', (data) => {
           console.log('数字人说话结束:', data);
-          updateStatus('等待用户说话...');
+          updateStatus('对话中...');
           
           // 提取数字人回答的文本
           if (data && data.text) {
             const chatOutput = document.querySelector('#chat-output');
             const responseDiv = document.createElement('div');
-            responseDiv.className = 'chat-message bot-message';
-            responseDiv.innerHTML = `
-              <div class="message-label">🤖 数字人回答:</div>
-              <div class="message-content">${data.text}</div>
-            `;
+            responseDiv.className = 'chat-message assistant-message';
+            responseDiv.innerHTML = `🤖 ${data.text}`;
             chatOutput.appendChild(responseDiv);
             chatOutput.scrollTop = chatOutput.scrollHeight;
           }
@@ -191,44 +235,30 @@ async function initDuix() {
       // 开始初始化
       duixInstance.init({
         sign: signData.sign,
-        containerLable: '.remote-container', // 使用库要求的参数名（注意是Lable不是Label）
+        containerLable: '.duix-fullscreen', // 使用全屏容器
         conversationId: signData.conversationId,
         ...configData.duixConfig.defaultOptions
       });
     });
     
-    updateStatus('正在初始化... (60秒超时)');
-    document.querySelector('#init-btn').disabled = true;
+    updateStatus('初始化中...');
+    document.querySelector('#start-btn').disabled = true;
     
     // 使用 Promise.race 实现超时机制
     try {
       await Promise.race([initSuccess, initTimeout]);
       
       // 初始化成功
-      updateStatus('初始化成功，可以开始会话');
+      updateStatus('初始化成功');
       document.querySelector('#start-btn').disabled = false;
-      document.querySelector('#init-btn').disabled = false;
-      document.querySelector('#retry-btn').style.display = 'none';
       document.querySelector('#duix-container').innerHTML = 
-        `<p style="color: green;">✅ Duix 初始化成功！</p>
-         <p>ConversationId: ${signData.conversationId}</p>
-         <p>可以开始语音会话了。</p>`;
+        `<p style="color: #00ff88;">数字人已就绪</p>`;
          
     } catch (timeoutError) {
       // 处理超时或初始化失败
       updateStatus('初始化失败');
-      document.querySelector('#init-btn').disabled = false;
-      document.querySelector('#retry-btn').style.display = 'inline-block';
       document.querySelector('#duix-container').innerHTML = 
-        `<p style="color: red;">❌ ${timeoutError.message}</p>
-         <p>可能的原因：</p>
-         <ul style="text-align: left; color: #ccc;">
-           <li>网络连接问题</li>
-           <li>Duix 服务不可用</li>
-           <li>配置参数错误</li>
-           <li>签名验证失败</li>
-         </ul>
-         <p>请检查控制台错误信息或点击重试按钮。</p>`;
+        `<p style="color: #ff6b6b;">初始化失败: ${timeoutError.message}</p>`;
       
       // 清理实例
       if (duixInstance) {
@@ -244,27 +274,49 @@ async function initDuix() {
     
   } catch (error) {
     console.error('Duix 初始化失败:', error);
-    updateStatus('初始化失败 - 请检查后端服务');
-    document.querySelector('#init-btn').disabled = false;
+    updateStatus('初始化失败');
     document.querySelector('#duix-container').innerHTML = 
-      '<p style="color: red;">Duix 初始化失败，请检查控制台和后端服务</p>';
+      '<p style="color: #ff6b6b;">初始化失败，请检查网络</p>';
+  }
+}
+
+// 初始化 HLS 直播流
+function initBackgroundStream() {
+  const video = document.querySelector('#background-stream');
+  
+  // 默认的测试直播流（您可以替换为实际的 m3u8 地址）
+  const defaultStreamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'; // 测试流
+  
+  // 检查是否支持 HLS
+  if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = defaultStreamUrl;
+    video.load();
+    video.play().catch(e => {
+      console.log('视频自动播放被阻止:', e);
+    });
+  } else if (window.Hls && window.Hls.isSupported()) {
+    // 使用 hls.js 库处理 HLS 流
+    const hls = new window.Hls();
+    hls.loadSource(defaultStreamUrl);
+    hls.attachMedia(video);
+    hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(e => {
+        console.log('视频自动播放被阻止:', e);
+      });
+    });
+    hls.on(window.Hls.Events.ERROR, (event, data) => {
+      console.log('HLS 错误:', data);
+      // 如果加载失败，显示默认背景
+      video.style.display = 'none';
+    });
+  } else {
+    console.error('浏览器不支持 HLS 播放');
+    // 如果不支持 HLS，隐藏视频元素
+    video.style.display = 'none';
   }
 }
 
 // 绑定事件
-document.querySelector('#init-btn').addEventListener('click', async () => {
-  // 隐藏重试按钮
-  document.querySelector('#retry-btn').style.display = 'none';
-  await initDuix();
-});
-
-document.querySelector('#retry-btn').addEventListener('click', async () => {
-  console.log('用户点击重试按钮');
-  // 隐藏重试按钮
-  document.querySelector('#retry-btn').style.display = 'none';
-  await initDuix();
-});
-
 document.querySelector('#start-btn').addEventListener('click', async () => {
   if (duixInstance) {
     try {
@@ -277,7 +329,7 @@ document.querySelector('#start-btn').addEventListener('click', async () => {
       console.log('会话启动结果:', result);
       
       if (result && !result.err) {
-        updateStatus('会话进行中 - 可以开始说话');
+        updateStatus('对话进行中');
         document.querySelector('#start-btn').disabled = true;
         document.querySelector('#stop-btn').disabled = false;
         
@@ -285,9 +337,7 @@ document.querySelector('#start-btn').addEventListener('click', async () => {
         const chatOutput = document.querySelector('#chat-output');
         const startDiv = document.createElement('div');
         startDiv.className = 'chat-message system-message';
-        startDiv.innerHTML = `
-          <div class="message-content">🎤 会话已开始，请开始说话...</div>
-        `;
+        startDiv.innerHTML = `🎤 对话开始，请说话...`;
         chatOutput.appendChild(startDiv);
         chatOutput.scrollTop = chatOutput.scrollHeight;
       }
@@ -313,7 +363,16 @@ document.querySelector('#stop-btn').addEventListener('click', async () => {
   }
 });
 
-// 页面加载时初始化
-window.addEventListener('DOMContentLoaded', () => {
-  console.log('应用已加载，准备初始化 Duix');
+// 页面加载时自动初始化
+window.addEventListener('DOMContentLoaded', async () => {
+  console.log('应用已加载，开始自动初始化');
+  
+  // 初始化背景直播流
+  initBackgroundStream();
+  
+  // 初始化绿幕去除功能
+  initChromaKey();
+  
+  // 自动初始化 Duix
+  await initDuix();
 });

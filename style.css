@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #1f2937;
-  background-color: #f9fafb;
+  color: #ffffff;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,22 +14,18 @@
   -webkit-text-size-adjust: 100%;
 }
 
-a {
-  font-weight: 500;
-  color: #3b82f6;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #2563eb;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+  width: 100vw;
+  height: 100vh;
+  background: #000000;
+  overflow: hidden;
 }
 
 #app {
@@ -38,63 +34,212 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .app-container {
-  display: flex;
   width: 100%;
   height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
-.left-panel {
-  flex: 2;
-  min-width: 400px;
-  max-width: 600px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+/* 背景直播流 */
+.background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* 数字人全屏容器 */
+.duix-fullscreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  box-sizing: border-box;
+  background: transparent;
+  overflow: hidden;
 }
 
-.right-panel {
-  flex: 3;
-  min-width: 500px;
-  background: #ffffff;
+/* 数字人视频/canvas样式 */
+.duix-fullscreen canvas,
+.duix-fullscreen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 数字人容器内的文本提示 */
+.duix-fullscreen p {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #00ff88;
+  font-size: 18px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 5;
+}
+
+/* 右上角透明对话框 */
+.chat-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 350px;
+  max-height: 400px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.chat-content {
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  border-left: 2px solid #3b82f6;
+  gap: 12px;
+  height: 100%;
 }
 
-/* 在超宽屏幕上进一步调整比例 */
-@media (min-width: 1400px) {
-  .left-panel {
-    flex: 1.5;
+.status-display {
+  color: #00ff88;
+  font-size: 12px;
+  text-align: center;
+  padding: 4px 8px;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.chat-messages {
+  flex: 1;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.control-buttons button {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  color: #000000;
+}
+
+.control-buttons button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00cc6a, #00aa55);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.control-buttons button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 聊天消息样式 */
+.chat-message {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.user-message {
+  background: rgba(0, 122, 255, 0.2);
+  border-left: 3px solid #007aff;
+  color: #ffffff;
+}
+
+.assistant-message {
+  background: rgba(0, 255, 136, 0.2);
+  border-left: 3px solid #00ff88;
+  color: #ffffff;
+}
+
+.system-message {
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+.asr-message {
+  background: rgba(255, 193, 7, 0.2);
+  border-left: 3px solid #ffc107;
+  color: #ffffff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .chat-overlay {
+    width: 300px;
+    max-height: 300px;
+    top: 10px;
+    right: 10px;
   }
   
-  .right-panel {
-    flex: 3.5;
+  .chat-content {
+    padding: 12px;
+    gap: 8px;
   }
 }
 
-#duix-container {
-  width: 100%;
-  max-width: 500px;
-  aspect-ratio: 9 / 16;
-  border: 3px solid #3b82f6;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
-  color: #1f2937;
-  padding: 1rem;
-  text-align: center;
-  gap: 0.5rem;
+@media (max-width: 480px) {
+  .chat-overlay {
+    width: calc(100vw - 20px);
+    right: 10px;
+    left: 10px;
+    max-height: 250px;
+  }
 }
 
 #duix-container p {
