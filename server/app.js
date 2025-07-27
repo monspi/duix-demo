@@ -30,8 +30,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 工具函数：生成 JWT 签名（严格按照 Duix 官方文档）
-function generateSign(appId, appKey, sigExp = 1800) {
+// 工具函数：生成 JWT 签名（严格按照 Duix 官方文档，优化时间戳）
+function generateSign(appId, appKey, sigExp = 1810) {
   try {
     // 验证输入参数
     if (!appId || !appKey) {
@@ -44,9 +44,14 @@ function generateSign(appId, appKey, sigExp = 1800) {
       sigExp: sigExp
     });
     
-    // 根据官方文档，payload 只包含 appId
+    // 计算时间戳，提前10秒以避免时间同步问题
+    const currentTime = Math.floor(Date.now() / 1000);
+    const adjustedTime = currentTime - 10; // 提前10秒
+    
+    // 根据官方文档，payload 包含 appId 和自定义时间戳
     const payload = {
-      appId: appId
+      appId: appId,
+      iat: adjustedTime // 签发时间提前10秒
     };
     
     // 计算过期时间
@@ -61,10 +66,12 @@ function generateSign(appId, appKey, sigExp = 1800) {
     
     // 验证生成的 token
     const decoded = jwt.verify(token, appKey, { algorithms: ['HS256'] });
-    console.log('JWT Token 生成成功:', {
+    console.log('JWT Token 生成成功 (时间戳已优化):', {
       appId: decoded.appId,
       iat: new Date(decoded.iat * 1000).toISOString(),
-      exp: new Date(decoded.exp * 1000).toISOString()
+      exp: new Date(decoded.exp * 1000).toISOString(),
+      adjustedSeconds: -10,
+      validitySeconds: sigExp
     });
     
     return token;
@@ -87,14 +94,6 @@ function validateDuixConfig() {
 }
 
 // 路由
-app.get('/api/test', (req, res) => {
-  res.json({
-    message: 'Duix Demo 后端服务运行正常！',
-    timestamp: new Date().toISOString(),
-    status: 'success'
-  });
-});
-
 app.get('/api/duix/config', (req, res) => {
   const configValidation = validateDuixConfig();
   
@@ -134,7 +133,7 @@ app.post('/api/duix/sign', (req, res) => {
   const { userId, conversationId: reqConversationId, sigExp } = req.body;
   const currentTime = Date.now();
   const useConversationId = reqConversationId || config.duix.conversationId || `conv_${currentTime}`;
-  const signatureExpiration = sigExp || config.duix.security.signatureExpiration;
+  const signatureExpiration = sigExp || 1810; // 默认1810秒有效期
   
   try {
     // 使用官方 JWT 方式生成签名
@@ -175,111 +174,6 @@ app.post('/api/duix/action', (req, res) => {
     action,
     result: `执行了动作: ${action}`,
     timestamp: new Date().toISOString()
-  });
-});
-
-// JWT 验证测试接口
-app.post('/api/duix/verify-token', (req, res) => {
-  const { token } = req.body;
-  
-  if (!token) {
-    return res.status(400).json({
-      success: false,
-      error: '缺少 token 参数'
-    });
-  }
-  
-  try {
-    // 验证 JWT token
-    const decoded = jwt.verify(token, config.duix.appKey, {
-      algorithms: ['HS256']
-    });
-    
-    res.json({
-      success: true,
-      message: 'Token 验证成功',
-      payload: {
-        appId: decoded.appId,
-        issuedAt: new Date(decoded.iat * 1000).toISOString(),
-        expiresAt: new Date(decoded.exp * 1000).toISOString(),
-        isExpired: decoded.exp < Math.floor(Date.now() / 1000)
-      }
-    });
-    
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      error: 'Token 验证失败',
-      message: error.message
-    });
-  }
-});
-
-// JWT 调试接口
-app.post('/api/duix/debug-token', (req, res) => {
-  const configValidation = validateDuixConfig();
-  
-  if (!configValidation.valid) {
-    return res.status(400).json({
-      success: false,
-      error: 'Duix 配置无效',
-      message: configValidation.message
-    });
-  }
-  
-  try {
-    // 生成测试 Token
-    const testToken = generateSign(
-      config.duix.appId,
-      config.duix.appKey,
-      1800
-    );
-    
-    // 解码 Token 查看内容（不验证签名）
-    const decoded = jwt.decode(testToken, { complete: true });
-    
-    res.json({
-      success: true,
-      token: testToken,
-      header: decoded.header,
-      payload: decoded.payload,
-      config: {
-        appId: config.duix.appId,
-        algorithm: 'HS256',
-        keyLength: config.duix.appKey.length
-      }
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Token 调试失败',
-      message: error.message
-    });
-  }
-});
-
-// 配置管理接口
-app.get('/api/config/status', (req, res) => {
-  const configValidation = validateDuixConfig();
-  
-  res.json({
-    configFile: {
-      exists: true,
-      lastModified: fs.statSync(configPath).mtime
-    },
-    duix: {
-      configured: configValidation.valid,
-      message: configValidation.message || 'Duix 配置正常',
-      hasAppId: !!config.duix.appId && config.duix.appId !== 'your_app_id_here',
-      hasAppKey: !!config.duix.appKey && config.duix.appKey !== 'your_app_key_here',
-      environment: config.duix.environment
-    },
-    server: {
-      port: PORT,
-      cors: config.server.cors.enabled,
-      status: 'running'
-    }
   });
 });
 

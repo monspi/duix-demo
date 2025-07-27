@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #1f2937;
+  background-color: #f9fafb;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -16,11 +16,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #3b82f6;
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #2563eb;
 }
 
 body {
@@ -29,48 +29,224 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.demo-container {
+.app-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.left-panel {
+  flex: 2;
+  min-width: 400px;
+  max-width: 600px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.right-panel {
+  flex: 3;
+  min-width: 500px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  margin-top: 2rem;
+  border-left: 2px solid #3b82f6;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
+/* 在超宽屏幕上进一步调整比例 */
+@media (min-width: 1400px) {
+  .left-panel {
+    flex: 1.5;
+  }
+  
+  .right-panel {
+    flex: 3.5;
+  }
 }
 
 #duix-container {
   width: 100%;
-  max-width: 600px;
-  min-height: 300px;
-  border: 2px solid #646cff;
-  border-radius: 8px;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 1rem 0;
+  max-width: 500px;
+  aspect-ratio: 9 / 16;
+  border: 3px solid #3b82f6;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
+  color: #1f2937;
+  padding: 1rem;
+  text-align: center;
+  gap: 0.5rem;
 }
 
-#status {
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  font-weight: bold;
-  min-width: 200px;
+#duix-container p {
+  margin: 0.25rem 0;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.chat-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.chat-header h2 {
+  margin: 0 0 1rem 0;
+  color: #3b82f6;
+  font-size: 1.5em;
   text-align: center;
+}
+
+.status-bar {
+  padding: 0.75rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  color: #1f2937;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-output {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.welcome-message {
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  padding: 2rem;
+  line-height: 1.6;
+}
+
+.chat-message {
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+.message-content {
+  padding: 1rem;
+  border-radius: 12px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.user-message .message-label {
+  color: #059669;
+}
+
+.user-message .message-content {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #065f46;
+}
+
+.bot-message .message-label {
+  color: #3b82f6;
+}
+
+.bot-message .message-content {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #1e40af;
+}
+
+.system-message .message-content {
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #475569;
+  text-align: center;
+  font-style: italic;
+  padding: 0.75rem;
+}
+
+.control-panel {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(248, 250, 252, 0.9);
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+  
+  .left-panel {
+    flex: 0 0 40vh;
+    min-width: unset;
+    max-width: unset;
+    padding: 1rem;
+  }
+  
+  .right-panel {
+    flex: 1;
+    min-width: unset;
+    border-left: none;
+    border-top: 2px solid #3b82f6;
+  }
+  
+  #duix-container {
+    max-width: 300px;
+  }
+  
+  .chat-header h2 {
+    font-size: 1.2em;
+  }
+  
+  .control-panel {
+    padding: 1rem;
+  }
+  
+  button {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 
 button {
@@ -80,43 +256,33 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #3b82f6;
   color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
   margin: 0 0.25rem;
 }
 button:hover:not(:disabled) {
-  border-color: #646cff;
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background-color: #94a3b8;
 }
 
 #retry-btn {
-  background-color: #ff6b35;
-  border-color: #ff6b35;
+  background-color: #f59e0b;
+  border-color: #f59e0b;
 }
 #retry-btn:hover {
-  background-color: #e55a2b;
-  border-color: #e55a2b;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-    color: #213547;
-  }
+  background-color: #d97706;
+  border-color: #d97706;
 }

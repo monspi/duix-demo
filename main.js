@@ -3,23 +3,31 @@ import DUIX from 'duix-guiji-light'
 
 // 初始化应用
 document.querySelector('#app').innerHTML = `
-  <div>
-    <h1>Duix Guiji Light Demo</h1>
-    <div class="demo-container">
+  <div class="app-container">
+    <div class="left-panel">
       <div id="duix-container" class="remote-container">
         <p>准备就绪，点击开始演示...</p>
       </div>
-      <div class="controls">
+    </div>
+    <div class="right-panel">
+      <div class="chat-header">
+        <h2>🤖 Duix 智能对话</h2>
+        <div id="status" class="status-bar">状态: 未初始化</div>
+      </div>
+      <div class="chat-area">
+        <div id="chat-output" class="chat-output">
+          <div class="welcome-message">
+            欢迎使用 Duix 智能对话系统！<br>
+            请先初始化数字人，然后开始对话。
+          </div>
+        </div>
+      </div>
+      <div class="control-panel">
         <button id="init-btn" type="button">初始化 Duix</button>
         <button id="start-btn" type="button" disabled>开始会话</button>
         <button id="stop-btn" type="button" disabled>停止会话</button>
-        <button id="api-test-btn" type="button">测试后端API</button>
-        <button id="config-btn" type="button">检查配置</button>
-        <button id="verify-btn" type="button" disabled>验证Token</button>
-        <button id="debug-btn" type="button">调试JWT</button>
         <button id="retry-btn" type="button" style="display: none;">重试初始化</button>
       </div>
-      <div id="status">状态: 未初始化</div>
     </div>
   </div>
 `
@@ -29,12 +37,12 @@ let duixInstance = null;
 let currentToken = null;
 
 function updateStatus(status) {
-  document.querySelector('#status').textContent = `状态: ${status}`;
+  document.querySelector('#status').textContent = status;
 }
 
 async function initDuix() {
   try {
-    updateStatus('获取配置中...');
+    updateStatus('开始初始化...');
     
     // 从后端获取配置
     const configResponse = await fetch('http://localhost:3000/api/duix/config');
@@ -49,14 +57,14 @@ async function initDuix() {
       return;
     }
     
-    // 获取签名
+    // 获取签名（使用优化的时间戳和有效期）
     const signResponse = await fetch('http://localhost:3000/api/duix/sign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         userId: 'demo_user',
         conversationId: configData.duixConfig.conversationId,
-        sigExp: 1800 // 30分钟有效期
+        sigExp: 1810 // 1810秒有效期
       })
     });
     
@@ -69,8 +77,14 @@ async function initDuix() {
       return;
     }
     
-    // 保存 token 用于验证
+    // 保存 token
     currentToken = signData.sign;
+    
+    console.log('🎯 开始初始化 Duix 实例', {
+      sign: signData.sign.substring(0, 50) + '...',
+      conversationId: signData.conversationId,
+      sigExp: signData.sigExp
+    });
     
     // 创建 DUIX 实例
     duixInstance = new DUIX();
@@ -78,39 +92,91 @@ async function initDuix() {
     // 创建初始化超时 Promise
     const initTimeout = new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new Error('初始化超时 (5秒)'));
-      }, 5000);
+        reject(new Error('初始化超时 (60秒)'));
+      }, 60000);
     });
     
     // 创建初始化成功 Promise
     const initSuccess = new Promise((resolve, reject) => {
-      // 监听初始化成功事件
-      duixInstance.on('initialSuccess', () => {
+      // 监听初始化成功事件（注意官方文档中是 intialSucccess）
+      duixInstance.on('intialSucccess', () => {
         console.log('Duix 初始化成功');
         
         // 绑定其他事件监听器
-        duixInstance.on('sessionStart', () => {
-          console.log('会话开始');
-          updateStatus('会话进行中 - 可以开始说话');
-          document.querySelector('#start-btn').disabled = true;
-          document.querySelector('#stop-btn').disabled = false;
-          document.querySelector('#duix-container').innerHTML = 
-            '<p style="color: blue;">🎤 会话进行中，请开始说话...</p>';
+        duixInstance.on('show', () => {
+          console.log('数字人已显示');
+          updateStatus('数字人已显示，可以开始会话');
         });
 
-        duixInstance.on('sessionEnd', () => {
+        duixInstance.on('bye', () => {
           console.log('会话结束');
           updateStatus('会话已结束');
           document.querySelector('#start-btn').disabled = false;
           document.querySelector('#stop-btn').disabled = true;
-          document.querySelector('#duix-container').innerHTML = 
-            '<p>会话已结束，可以重新开始。</p>';
+          
+          // 在聊天区域添加结束信息
+          const chatOutput = document.querySelector('#chat-output');
+          const endDiv = document.createElement('div');
+          endDiv.className = 'chat-message system-message';
+          endDiv.innerHTML = `
+            <div class="message-content">📞 会话已结束</div>
+          `;
+          chatOutput.appendChild(endDiv);
+          chatOutput.scrollTop = chatOutput.scrollHeight;
         });
 
-        duixInstance.on('asrResult', (result) => {
+        duixInstance.on('asrData', (result) => {
           console.log('语音识别结果:', result);
-          document.querySelector('#duix-container').innerHTML = 
-            `<p>🎤 识别到: <strong>${result.text || result}</strong></p>`;
+          const content = result.content || result.text || result;
+          
+          // 将用户输入添加到聊天区域
+          const chatOutput = document.querySelector('#chat-output');
+          const userDiv = document.createElement('div');
+          userDiv.className = 'chat-message user-message';
+          userDiv.innerHTML = `
+            <div class="message-label">👤 您说:</div>
+            <div class="message-content">${content}</div>
+          `;
+          chatOutput.appendChild(userDiv);
+          chatOutput.scrollTop = chatOutput.scrollHeight;
+        });
+
+        duixInstance.on('asrStart', () => {
+          console.log('开始语音识别');
+          updateStatus('🎤 正在听取语音...');
+        });
+
+        duixInstance.on('asrStop', () => {
+          console.log('语音识别结束');
+          updateStatus('等待语音输入...');
+        });
+
+        duixInstance.on('speakStart', (data) => {
+          console.log('数字人开始说话:', data);
+          updateStatus('数字人正在说话...');
+        });
+
+        duixInstance.on('speakEnd', (data) => {
+          console.log('数字人说话结束:', data);
+          updateStatus('等待用户说话...');
+          
+          // 提取数字人回答的文本
+          if (data && data.text) {
+            const chatOutput = document.querySelector('#chat-output');
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'chat-message bot-message';
+            responseDiv.innerHTML = `
+              <div class="message-label">🤖 数字人回答:</div>
+              <div class="message-content">${data.text}</div>
+            `;
+            chatOutput.appendChild(responseDiv);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+          }
+        });
+
+        duixInstance.on('progress', (progress) => {
+          console.log('加载进度:', progress);
+          updateStatus(`加载中... ${progress}%`);
         });
         
         resolve('success');
@@ -125,13 +191,13 @@ async function initDuix() {
       // 开始初始化
       duixInstance.init({
         sign: signData.sign,
-        containerLable: '.remote-container',
+        containerLable: '.remote-container', // 使用库要求的参数名（注意是Lable不是Label）
         conversationId: signData.conversationId,
         ...configData.duixConfig.defaultOptions
       });
     });
     
-    updateStatus('正在初始化... (5秒超时)');
+    updateStatus('正在初始化... (60秒超时)');
     document.querySelector('#init-btn').disabled = true;
     
     // 使用 Promise.race 实现超时机制
@@ -141,12 +207,11 @@ async function initDuix() {
       // 初始化成功
       updateStatus('初始化成功，可以开始会话');
       document.querySelector('#start-btn').disabled = false;
-      document.querySelector('#verify-btn').disabled = false;
+      document.querySelector('#init-btn').disabled = false;
       document.querySelector('#retry-btn').style.display = 'none';
       document.querySelector('#duix-container').innerHTML = 
         `<p style="color: green;">✅ Duix 初始化成功！</p>
          <p>ConversationId: ${signData.conversationId}</p>
-         <p>JWT Token 有效期: ${signData.sigExp}秒</p>
          <p>可以开始语音会话了。</p>`;
          
     } catch (timeoutError) {
@@ -203,14 +268,36 @@ document.querySelector('#retry-btn').addEventListener('click', async () => {
 document.querySelector('#start-btn').addEventListener('click', async () => {
   if (duixInstance) {
     try {
+      updateStatus('启动数字人会话...');
       // 开始会话，启用ASR（自动语音识别）
       const result = await duixInstance.start({
-        openAsr: true
+        openAsr: true,
+        muted: false // 非静音模式
       });
       console.log('会话启动结果:', result);
+      
+      if (result && !result.err) {
+        updateStatus('会话进行中 - 可以开始说话');
+        document.querySelector('#start-btn').disabled = true;
+        document.querySelector('#stop-btn').disabled = false;
+        
+        // 在聊天区域添加开始信息
+        const chatOutput = document.querySelector('#chat-output');
+        const startDiv = document.createElement('div');
+        startDiv.className = 'chat-message system-message';
+        startDiv.innerHTML = `
+          <div class="message-content">🎤 会话已开始，请开始说话...</div>
+        `;
+        chatOutput.appendChild(startDiv);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+      }
     } catch (error) {
       console.error('会话启动失败:', error);
       updateStatus('会话启动失败');
+      // 如果是自动播放策略问题，提示用户
+      if (error.code === 4009) {
+        alert('浏览器阻止了自动播放，请重试或检查浏览器设置');
+      }
     }
   }
 });
@@ -223,140 +310,6 @@ document.querySelector('#stop-btn').addEventListener('click', async () => {
     } catch (error) {
       console.error('停止会话失败:', error);
     }
-  }
-});
-
-document.querySelector('#api-test-btn').addEventListener('click', async () => {
-  try {
-    const response = await fetch('http://localhost:3000/api/test');
-    const data = await response.json();
-    console.log('后端API响应:', data);
-    alert(`后端响应: ${data.message}`);
-  } catch (error) {
-    console.error('API调用失败:', error);
-    alert('无法连接到后端服务，请确保后端服务已启动');
-  }
-});
-
-document.querySelector('#config-btn').addEventListener('click', async () => {
-  try {
-    const response = await fetch('http://localhost:3000/api/config/status');
-    const data = await response.json();
-    console.log('配置状态:', data);
-    
-    const configInfo = `
-配置文件状态: ${data.configFile.exists ? '✅ 存在' : '❌ 不存在'}
-Duix 配置: ${data.duix.configured ? '✅ 正常' : '⚠️ 需要配置'}
-AppId: ${data.duix.hasAppId ? '✅ 已设置' : '❌ 未设置'}
-AppKey: ${data.duix.hasAppKey ? '✅ 已设置' : '❌ 未设置'}
-环境: ${data.duix.environment}
-服务端口: ${data.server.port}
-服务状态: ${data.server.status}
-
-${data.duix.message}
-    `.trim();
-    
-    alert(configInfo);
-    
-    if (!data.duix.configured) {
-      updateStatus('配置需要完善');
-      document.querySelector('#duix-container').innerHTML = 
-        `<p style="color: orange;">⚠️ ${data.duix.message}</p>
-         <p>请编辑 server/config/config.json 文件，设置正确的 appId 和 appKey</p>`;
-    }
-    
-  } catch (error) {
-    console.error('配置检查失败:', error);
-    alert('配置检查失败，请确保后端服务已启动');
-  }
-});
-
-document.querySelector('#verify-btn').addEventListener('click', async () => {
-  if (!currentToken) {
-    alert('没有可验证的 Token，请先初始化 Duix');
-    return;
-  }
-  
-  try {
-    const response = await fetch('http://localhost:3000/api/duix/verify-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: currentToken })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      const tokenInfo = `
-✅ JWT Token 验证成功
-
-AppId: ${data.payload.appId}
-签发时间: ${data.payload.issuedAt}
-过期时间: ${data.payload.expiresAt}
-是否过期: ${data.payload.isExpired ? '是' : '否'}
-      `.trim();
-      
-      alert(tokenInfo);
-      
-      if (data.payload.isExpired) {
-        updateStatus('Token 已过期，需要重新获取');
-        document.querySelector('#duix-container').innerHTML = 
-          '<p style="color: orange;">⚠️ JWT Token 已过期，请重新初始化</p>';
-      }
-    } else {
-      alert(`❌ Token 验证失败: ${data.message}`);
-    }
-    
-  } catch (error) {
-    console.error('Token 验证失败:', error);
-    alert('Token 验证失败，请确保后端服务已启动');
-  }
-});
-
-document.querySelector('#debug-btn').addEventListener('click', async () => {
-  try {
-    const response = await fetch('http://localhost:3000/api/duix/debug-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      console.log('JWT 调试信息:', data);
-      
-      const debugInfo = `
-🔍 JWT Token 调试信息
-
-Header:
-  算法: ${data.header.alg}
-  类型: ${data.header.typ}
-
-Payload:
-  AppId: ${data.payload.appId}
-  签发时间: ${new Date(data.payload.iat * 1000).toISOString()}
-  过期时间: ${new Date(data.payload.exp * 1000).toISOString()}
-
-配置:
-  AppId: ${data.config.appId}
-  算法: ${data.config.algorithm}
-  密钥长度: ${data.config.keyLength} 字符
-
-Token (前50字符): ${data.token.substring(0, 50)}...
-      `.trim();
-      
-      alert(debugInfo);
-      
-      // 在控制台输出完整信息
-      console.log('完整 JWT Token:', data.token);
-      
-    } else {
-      alert(`❌ JWT 调试失败: ${data.message}`);
-    }
-    
-  } catch (error) {
-    console.error('JWT 调试失败:', error);
-    alert('JWT 调试失败，请确保后端服务已启动');
   }
 });
 
