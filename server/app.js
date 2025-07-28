@@ -93,6 +93,21 @@ function validateDuixConfig() {
   return { valid: true };
 }
 
+app.get('/api/duix/config', (req, res) => {
+  const configValidation = validateDuixConfig();
+  
+  // 只返回前端需要的非敏感配置信息
+  res.json({
+    duixConfig: {
+      validation: {
+        valid: configValidation.valid,
+        message: configValidation.valid ? '配置正常' : '需要完善配置'
+      }
+    }
+  });
+});
+
+
 app.post('/api/duix/sign', (req, res) => {
   const configValidation = validateDuixConfig();
   
