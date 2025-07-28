@@ -14,10 +14,14 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
-config.json
-config.*.json
+
+# 具体的配置文件（保留示例文件）
+frontend.config.json
 server/config/config.json
-server/config/config.*.json
+
+# 保留示例配置文件
+!*.config.example.json
+!config.example.json
 
 # 日志文件
 logs/
@@ -29,6 +33,9 @@ logs/
 *.swp
 *.swo
 *~
+
+# GitHub工作流和配置
+.github/
 
 # 操作系统
 .DS_Store
