@@ -97,5 +97,3 @@ npm run build
 - [前端配置文档](./docs/frontend-config.md) - 数字人直播间前端配置说明
 - [后端配置文档](./docs/backend-config.md) - Duix 后端服务配置说明
 - [配置示例](./docs/config-examples.md) - 各种场景的配置示例
-- [背景图片功能](./docs/background-fallback.md) - 背景图片备用功能说明
-

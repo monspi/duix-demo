@@ -1,9 +1,54 @@
-# 📝 文档重构记录
+# 📝 项目变更记录
 
-## 重构日期
-2025年7月27日
+## v1.1.0 - 配置系统精简 (2025年7月28日)
 
-## 重构目标
+### 🔧 配置系统优化
+- **精简前端配置**: 移除未使用的配置项
+  - 删除 `backend.httpsUrl` (未使用)
+  - 删除 `ui.hideLoadingAfterInit` (未使用) 
+  - 删除 `ui.chatPosition` (未使用)
+- **精简后端配置**: 移除冗余配置项
+  - 删除 `duix.environment` (未使用)
+  - 删除 `duix.apiBaseUrl` (未使用)
+  - 删除 `duix.config.*` 整个对象 (未使用)
+  - 删除 `duix.security.signatureExpiration` (代码中使用固定值)
+  - 删除 `duix.security.enableConfigAPI` (未使用)
+  - 删除 `duix.security.logSensitiveInfo` (未使用)
+  - 删除 `server.https.*` 整个对象 (未使用)
+  - 删除 `logging.*` 整个对象 (未使用)
+
+### 📄 文档更新
+- 更新 `config-examples.md` 配置示例
+- 简化 `backend-config.md` 后端配置说明
+- 简化 `frontend-config.md` 前端配置说明
+- 移除过时的配置项说明
+
+### ✅ 保留的核心配置
+**前端配置 (frontend.config.json)**:
+- `backend.baseUrl` - 后端API地址
+- `livestream.defaultStreamUrl` - 直播流地址
+- `livestream.autoPlay` - 自动播放
+- `livestream.enableHLS` - HLS功能
+- `livestream.fallbackBackgroundImage` - 背景图片
+- `ui.autoInit` - 自动初始化
+
+**后端配置 (server/config/config.json)**:
+- `duix.appId` - Duix应用ID
+- `duix.appKey` - Duix应用密钥
+- `duix.conversationId` - 对话会话ID
+- `duix.security.allowedOrigins` - CORS设置
+- `server.port` - 服务器端口
+- `server.cors.credentials` - CORS认证
+
+### 🎯 优化效果
+- 配置文件体积减少 ~60%
+- 降低用户配置复杂度
+- 提高维护效率
+- 减少配置错误可能性
+
+---
+
+## v1.0.0 - 文档重构 (2025年7月27日)
 - 整理项目文档结构
 - 使用更清晰的文件命名
 - 集中管理所有文档文件
