@@ -93,31 +93,6 @@ function validateDuixConfig() {
   return { valid: true };
 }
 
-// 路由
-app.get('/api/duix/config', (req, res) => {
-  const configValidation = validateDuixConfig();
-  
-  // 只返回前端需要的非敏感配置信息
-  res.json({
-    duixConfig: {
-      enabled: configValidation.valid,
-      environment: config.duix.environment,
-      version: '1.0.0',
-      features: ['语音识别', '智能对话', 'ASR支持'],
-      containerSelector: '.remote-container',
-      defaultOptions: {
-        openAsr: config.duix.config.enableAsr,
-        language: config.duix.config.defaultLanguage,
-        timeout: config.duix.config.timeout
-      },
-      validation: {
-        valid: configValidation.valid,
-        message: configValidation.valid ? '配置正常' : '需要完善配置'
-      }
-    }
-  });
-});
-
 app.post('/api/duix/sign', (req, res) => {
   const configValidation = validateDuixConfig();
   
@@ -162,19 +137,6 @@ app.post('/api/duix/sign', (req, res) => {
       message: error.message
     });
   }
-});
-
-app.post('/api/duix/action', (req, res) => {
-  const { action, data } = req.body;
-  
-  console.log('收到 Duix 动作:', action, data);
-  
-  res.json({
-    success: true,
-    action,
-    result: `执行了动作: ${action}`,
-    timestamp: new Date().toISOString()
-  });
 });
 
 // 启动服务器

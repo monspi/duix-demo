@@ -1,7 +1,6 @@
 {
   "backend": {
-    "baseUrl": "http://localhost:3000",
-    "httpsUrl": "https://localhost:3443"
+    "baseUrl": "http://localhost:3000"
   },
   "livestream": {
     "defaultStreamUrl": "",
@@ -10,8 +9,6 @@
     "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
-    "hideLoadingAfterInit": true,
-    "chatPosition": "top-right",
     "autoInit": true
   }
 }

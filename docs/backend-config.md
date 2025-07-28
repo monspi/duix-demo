@@ -1,4 +1,4 @@
-# Duix 配置说明
+# 后端配置说明
 
 ## config.json 配置文件说明
 
@@ -19,13 +19,31 @@
 - **获取方式**: 在 Duix 控制台中创建应用后获得
 - **示例**: `"your_app_key_here"`
 
-#### duix.security.signatureExpiration
-- **描述**: JWT 签名有效期
+#### duix.conversationId
+- **描述**: 对话会话 ID
+- **类型**: 字符串
+- **必需**: 否（如果为空会自动生成）
+- **用途**: 用于标识特定的对话会话
+- **示例**: `"your_conversation_id_here"`
+
+#### duix.security.allowedOrigins
+- **描述**: CORS 允许的来源地址列表
+- **类型**: 字符串数组
+- **必需**: 是
+- **用途**: 控制哪些域名可以访问后端 API
+- **示例**: `["http://localhost:5173", "https://localhost:5173"]`
+
+#### server.port
+- **描述**: HTTP 服务器监听端口
 - **类型**: 整数
-- **单位**: 秒
-- **默认值**: 1800 (30分钟)
-- **说明**: 根据 Duix 官方建议，建议不超过 1800 秒
-- **示例**: `1800`
+- **默认值**: 3000
+- **示例**: `3000`
+
+#### server.cors.credentials
+- **描述**: 是否允许携带认证信息的跨域请求
+- **类型**: 布尔值
+- **推荐值**: true
+- **示例**: `true`
 
 ### 完整配置示例
 
@@ -35,14 +53,20 @@
     "appId": "实际的应用ID",
     "appKey": "实际的应用密钥",
     "conversationId": "my_conversation_001",
-    "environment": "development",
-    "apiBaseUrl": "https://api.duix.com",
-    "config": {
-      "defaultLanguage": "zh-CN",
-      "enableAsr": true,
-      "enableTts": true,
-      "timeout": 30000,
-      "retryAttempts": 3
+    "security": {
+      "allowedOrigins": [
+        "http://localhost:5173",
+        "https://localhost:5173",
+        "http://localhost:3000",
+        "https://localhost:3443"
+      ]
+    }
+  },
+  "server": {
+    "port": 3000,
+    "cors": {
+      "enabled": true,
+      "credentials": true
     }
   }
 }

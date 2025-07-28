@@ -19,8 +19,7 @@
 ```json
 {
   "backend": {
-    "baseUrl": "http://localhost:3000",
-    "httpsUrl": "https://localhost:3443"
+    "baseUrl": "http://localhost:3000"
   },
   "livestream": {
     "defaultStreamUrl": "",
@@ -29,8 +28,6 @@
     "fallbackBackgroundImage": "/bg.png"
   },
   "ui": {
-    "hideLoadingAfterInit": true,
-    "chatPosition": "top-right",
     "autoInit": true
   }
 }
@@ -40,7 +37,6 @@
 
 #### backend 后端配置
 - `baseUrl`: 后端API服务器地址
-- `httpsUrl`: 后端HTTPS服务器地址（用于需要HTTPS的功能）
 
 #### livestream 直播流配置
 - `defaultStreamUrl`: 主要的m3u8直播流地址（**为空时直接加载背景图片**）
@@ -49,8 +45,6 @@
 - `fallbackBackgroundImage`: 视频流加载失败时的备用背景图片
 
 #### ui 界面配置
-- `hideLoadingAfterInit`: 数字人初始化成功后是否隐藏加载提示
-- `chatPosition`: 对话框位置（目前支持 "top-right"）
 - `autoInit`: 页面加载时是否自动初始化数字人
 
 ## 配置您的直播流
@@ -96,6 +90,17 @@
 {
   "backend": {
     "baseUrl": "http://your-server:3000"
+  }
+}
+```
+
+### 5. 禁用自动初始化
+如果需要手动控制初始化时机：
+
+```json
+{
+  "ui": {
+    "autoInit": false
   }
 }
 ```
@@ -147,15 +152,14 @@
 
 ## 界面自定义
 
-### 修改对话框位置
+### 修改对话框样式
 在 `style.css` 中修改 `.chat-overlay` 样式：
 ```css
 .chat-overlay {
   position: absolute;
   top: 20px;    /* 距离顶部距离 */
   right: 20px;  /* 距离右侧距离 */
-  /* 或者改为左上角 */
-  /* left: 20px; */
+  /* 可以修改位置 */
 }
 ```
 
@@ -166,9 +170,6 @@
   background: rgba(0, 0, 0, 0.7); /* 第四个参数控制透明度 */
 }
 ```
-
-### 修改按钮样式
-在 `style.css` 中修改 `.control-buttons button` 样式。
 
 ## 功能特性
 

@@ -3,23 +3,13 @@
     "appId": "your_app_id_here",
     "appKey": "your_app_key_here",
     "conversationId": "your_conversation_id_here",
-    "environment": "development",
-    "apiBaseUrl": "https://api.duix.com",
-    "config": {
-      "defaultLanguage": "zh-CN",
-      "enableAsr": true,
-      "enableTts": true,
-      "timeout": 30000,
-      "retryAttempts": 3
-    },
     "security": {
-      "signatureExpiration": 1800,
       "allowedOrigins": [
         "http://localhost:5173",
-        "http://localhost:3000"
-      ],
-      "enableConfigAPI": false,
-      "logSensitiveInfo": false
+        "https://localhost:5173",
+        "http://localhost:3000",
+        "https://localhost:3443"
+      ]
     }
   },
   "server": {
@@ -28,10 +18,5 @@
       "enabled": true,
       "credentials": true
     }
-  },
-  "logging": {
-    "level": "info",
-    "enableConsole": true,
-    "excludeSensitive": true
   }
 }
